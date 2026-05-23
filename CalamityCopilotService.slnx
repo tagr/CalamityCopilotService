@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/samples/">
+    <File Path="floodwatch.json" />
+  </Folder>
+  <Project Path="CalamityCopilotService.Api/CalamityCopilotService.Api.csproj" />
+  <Project Path="CalamityCopilotService.AppHost/CalamityCopilotService.AppHost.csproj" />
+  <Project Path="CalamityCopilotService.ServiceDefaults/CalamityCopilotService.ServiceDefaults.csproj" />
+</Solution>
