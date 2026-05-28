@@ -1,0 +1,161 @@
+mcs.metadata:
+  componentName: Current Conditions
+kind: AdaptiveDialog
+modelDescription: "This tool can handle queries like these: current conditions, weather alerts, fire warnings, storm warnings, flooding."
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - current conditions
+      - what's the weather like right now
+      - show me current weather
+      - is it raining currently
+      - how is the weather outside
+      - weather update
+      - tell me today's conditions
+      - current temperature
+      - what are the conditions at this moment
+
+  actions:
+    - kind: AdaptiveCardPrompt
+      id: 6R38VM
+      card: |-
+        {
+          "type": "AdaptiveCard",
+          "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
+          "version": "1.5",
+          "body": [
+            {
+              "type": "TextBlock",
+              "text": "Where are you headed or where are you now?",
+              "wrap": true,
+              "style": "heading",
+              "weight": "Bolder",
+              "color": "Default",
+              "isSubtle": true,
+              "size": "ExtraLarge"
+            },
+            {
+              "type": "Image",
+              "url": "https://calamitycopilotstorage.blob.core.windows.net/calamitycopilot/radartower.png",
+              "altText": "location"
+            },
+            {
+              "type": "Input.Text",
+              "placeholder": "Enter a city, place, region, or coordinates",
+              "id": "location",
+              "label": "Location",
+              "maxLength": 80,
+              "isRequired": true,
+              "errorMessage": "Please provide a location",
+              "inlineAction": {
+                "type": "Action.Submit",
+                "id": "locationAction",
+                "title": "Next",
+                "iconUrl": "icon:ArrowRight",
+                "associatedInputs": "auto",
+                "data": {
+                  "actionSubmitId": "locationAction"
+                }
+              },
+              "valueChangedAction": {
+                "type": "Action.ResetInputs"
+              }
+            }
+          ]
+        }
+      output:
+        binding:
+          actionSubmitId: Topic.actionSubmitId
+          location: Topic.location
+
+      outputType:
+        properties:
+          actionSubmitId: String
+          location: String
+
+    - kind: AdaptiveCardPrompt
+      id: 2WfBzt
+      card: |-
+        {
+          "type": "AdaptiveCard",
+          "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
+          "version": "1.5",
+          "body": [
+            {
+              "type": "TextBlock",
+              "wrap": true,
+              "text": "Select an alert",
+              "size": "ExtraLarge",
+              "style": "heading"
+            },
+            {
+              "type": "Image",
+              "url": "https://calamitycopilotstorage.blob.core.windows.net/calamitycopilot/hurricane-milton.png",
+              "altText": "weather",
+              "selectAction": {
+                "type": "Action.Submit",
+                "data": {
+                  "actionSubmitId": "weather"
+                }
+              },
+              "height": "192px",
+              "width": "240px"
+            },
+            {
+              "type": "ActionSet",
+              "actions": [
+                {
+                  "type": "Action.Submit",
+                  "title": "Weather Alerts",
+                  "iconUrl": "icon:WeatherRain",
+                  "style": "positive",
+                  "data": {
+                    "actionSubmitId": "weather"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Image",
+              "url": "https://calamitycopilotstorage.blob.core.windows.net/calamitycopilot/fire.png",
+              "selectAction": {
+                "type": "Action.Submit",
+                "data": {
+                  "actionSubmitId": "fire"
+                }
+              },
+              "width": "240px",
+              "height": "192px"
+            },
+            {
+              "type": "ActionSet",
+              "actions": [
+                {
+                  "type": "Action.Submit",
+                  "title": "Fire",
+                  "style": "destructive",
+                  "iconUrl": "icon:Fire",
+                  "data": {
+                    "actionSubmitId": "fire"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      output:
+        binding:
+          actionSubmitId: Topic.actionSubmitId
+
+      outputType:
+        properties:
+          actionSubmitId: String
+
+    - kind: SendActivity
+      id: sendActivity_Qh8Ev6
+      activity: Thanks! Based on what you entered, {Topic.location}, I'll get up-to-date {If(Topic.actionSubmitId = "weather", "NWS", "NASA  Satellite")}{Topic.actionSubmitId} information for this location.
+
+inputType: {}
+outputType: {}

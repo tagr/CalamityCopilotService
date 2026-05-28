@@ -1,0 +1,9 @@
+mcs.metadata:
+  componentName: location
+  description: User-entered location that can be sent to geocode tool.
+kind: Variable
+name: location
+scope: Conversation
+isExternalInitializationAllowed: false
+isOutputToExternalCallers: true
+initializationTimeoutInMilliseconds: 0

@@ -1,0 +1,11 @@
+.git
+.gitignore
+.vs
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/*.cache
+**/node_modules
+README.md
+LICENSE.txt

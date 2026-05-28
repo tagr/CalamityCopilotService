@@ -1,0 +1,15 @@
+mcs.metadata:
+  componentName: Conversation Start
+  description: This system topic triggers when the agent receives an Activity indicating the beginning of a new conversation. If you do not want the agent to initiate the conversation, disable this topic.
+kind: AdaptiveDialog
+beginDialog:
+  kind: OnConversationStart
+  id: main
+  actions:
+    - kind: SendActivity
+      id: sendMessage_M0LuhV
+      activity:
+        text:
+          - I'm {System.Bot.Name}. I provide real-time information from the National Weather Service. I can provide current weather updates, forecasts, and alerts for your area. How can I assist you today? You can start by asking for current conditions or alerts for a particular location.
+        speak:
+          - I'm {System.Bot.Name}. I provide real-time information from the National Weather Service. I can provide current weather updates, forecasts, and alerts for your area. How can I assist you today? You can start by asking for current conditions or alerts for a particular location.

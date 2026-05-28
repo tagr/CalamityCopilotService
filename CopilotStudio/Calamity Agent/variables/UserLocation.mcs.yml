@@ -1,0 +1,9 @@
+mcs.metadata:
+  componentName: UserLocation
+  description: Used to geocode requested location
+kind: Variable
+name: UserLocation
+scope: Conversation
+isExternalInitializationAllowed: false
+isOutputToExternalCallers: true
+initializationTimeoutInMilliseconds: 0
