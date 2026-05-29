@@ -272,3 +272,7 @@ azd up
 2. Open the **CalamityMCP2** connector and update the MCP server URL to point to your deployed Azure Container App endpoint.
 3. Publish the agent.
 
+## Acknowledgements
+* ♥️ My family
+* ♥️ My friends
+* 📺 Elaiza Benitez's Copilot Studio Agent Academy series, especially [Mission 08. Enhance user interactions in topics with Adaptive Cards](https://www.youtube.com/watch?v=RhIlzYHPCXo) to level up my agent UI
