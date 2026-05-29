@@ -276,3 +276,19 @@ azd up
 * ♥️ My family
 * ♥️ My friends
 * 📺 Elaiza Benitez's Copilot Studio Agent Academy series, especially [Mission 08. Enhance user interactions in topics with Adaptive Cards](https://www.youtube.com/watch?v=RhIlzYHPCXo) to level up my agent UI
+
+## Special Thanks
+
+[<img width="160" height="160" alt="250px-US-NationalWeatherService-Logo svg" src="https://github.com/user-attachments/assets/49d094d7-49f2-4b18-b325-356ba5fe2b4a" />](https://www.weather.gov/documentation/services-web-api)
+
+[<img width="160" height="160" alt="nasa_logo_white" src="https://github.com/user-attachments/assets/d40a7cd3-6698-402c-a8ce-573b22faaa60" />](https://firms.modaps.eosdis.nasa.gov/)
+
+## Additional Resources
+* [How the VIIRS Satellite Tracks Earth's Climate | The Henry Ford’s Innovation Nation](https://www.youtube.com/watch?v=wDPKystRvD0)
+* [Plan Ahead for Disasters | Ready.gov](https://www.ready.gov/)
+
+## Media
+1. Original: National Oceanic and Atmospheric Administration Vector:  Clindberg, Public domain, via Wikimedia Commons
+2. Original: National Aeronautics and Space Administration Image: Public Domain, via NASA FIRMS
+
+---
