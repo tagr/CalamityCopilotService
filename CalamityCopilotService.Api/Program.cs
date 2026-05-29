@@ -25,31 +25,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-/// <summary>
-/// Returns a 5-day random weather forecast (demo / smoke-test endpoint).
-/// Each day includes a date, temperature in Celsius and Fahrenheit, and a summary label.
-/// </summary>
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithSummary("Get a 5-day random weather forecast (demo)")
-.WithDescription("Returns five days of randomly generated weather data. Useful as a smoke-test to confirm the service is running.");
-
 /// <summary>
 /// Returns an 800×800 PNG static map image from Azure Maps centered on the given coordinates.
 /// An optional overlay can add fire detections (VIIRS) or NWS alert zone polygons to the image.
@@ -75,6 +50,8 @@ app.MapGet("/map/static", async (
 {
     var key = config["AzureMaps:Key"];
     var http = httpFactory.CreateClient();
+    var isFireMap = overlay.Equals("fire", StringComparison.OrdinalIgnoreCase);
+    var zoomLevel = isFireMap ? 12 : 10;
 
     // Azure Maps wants center as lon,lat
     var url =
@@ -82,7 +59,7 @@ app.MapGet("/map/static", async (
         "?api-version=2024-04-01" +
         "&tilesetId=microsoft.base.road" +
         $"&center={lon},{lat}" +
-        "&zoom=10" +
+        $"&zoom={zoomLevel}" +
         "&width=800" +
         "&height=800" +
         $"&pins=default||'{Uri.EscapeDataString("Location")}'{lon} {lat}" +

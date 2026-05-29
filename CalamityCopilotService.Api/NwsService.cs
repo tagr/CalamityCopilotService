@@ -104,8 +104,14 @@ public class NwsService(IHttpClientFactory httpFactory)
         {
             // coordinates = [ polygon, polygon, ... ] where polygon = [ ring, ring, ... ].
             // Render the outer ring (index 0) of each polygon as a separate path segment.
-            foreach (var polygon in geometry.coordinates.EnumerateArray())
-                AppendRing(sb, ParseRing(polygon[0]), style);
+            // Azure Maps G2 SKU allows at most MaxPathSegments path segments per request;
+            // keep the largest rings (by vertex count) as the most visually significant.
+            geometry.coordinates.EnumerateArray()
+                .Select(polygon => ParseRing(polygon[0]))
+                .OrderByDescending(ring => ring.Length)
+                .Take(MaxPathSegments)
+                .ToList()
+                .ForEach(ring => AppendRing(sb, ring, style));
         }
 
         return sb.ToString();
@@ -127,6 +133,9 @@ public class NwsService(IHttpClientFactory httpFactory)
 
     /// <summary>Azure Maps hard limit on locations per <c>&amp;path=</c> segment.</summary>
     private const int MaxPathLocations = 100;
+
+    /// <summary>Azure Maps G2 SKU limit on total <c>&amp;path=</c> segments per request.</summary>
+    private const int MaxPathSegments = 10;
 
     /// <summary>
     /// Reduces a polygon ring to at most <see cref="MaxPathLocations"/> points using

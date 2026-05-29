@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(rtk dotnet *)"
+      "Bash(rtk dotnet *)",
+      "Bash(rtk ls *)"
     ]
   }
 }
