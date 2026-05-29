@@ -1,4 +1,4 @@
-displayName: Calamity Agent
+displayName: "Calamity Agent: Weather & Fire Alerts"
 schemaName: ca_CalamityAgent
 accessControlPolicy: GroupMembership
 authenticationMode: Integrated
