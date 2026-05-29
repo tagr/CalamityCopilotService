@@ -45,6 +45,9 @@ Andy Merhaut (GitHub: [@tagr](https://github.com/tagr))
 
 ## System Architecture
 
+<img width="1073" height="460" alt="Agent Academy Hackathon" src="https://github.com/user-attachments/assets/1a87c6d9-1caf-46c2-b56d-559c630e788b" />
+
+
 ```mermaid
 graph TB
     subgraph User["👤 User Interface"]
