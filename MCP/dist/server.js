@@ -30,7 +30,7 @@ server.registerTool("geocode", {
 });
 // Alert map tool
 server.registerTool("alert-map", {
-    description: "Get a static alert map image URL for a given location. Use the geocode tool first to obtain latitude and longitude.",
+    description: "Get a static alert map image URL for a given location. Use the geocode tool first to obtain latitude and longitude. Only use this tool for weather alerts. For fire alerts, use the alert-fire tool instead.",
     inputSchema: {
         lat: z.number().describe("Latitude of the location (from the geocode tool)"),
         lon: z.number().describe("Longitude of the location (from the geocode tool)"),
@@ -48,7 +48,7 @@ server.registerTool("alert-map", {
 });
 // Fire map tool
 server.registerTool("alert-fire", {
-    description: "Get a static fire map image URL for a given location. Use the geocode tool first to obtain latitude and longitude.",
+    description: "Get a static fire map image URL for a given location. Use the geocode tool first to obtain latitude and longitude. Use this tool for fire alerts. For weather alerts, use the alert-map tool instead.",
     inputSchema: {
         lat: z.number().describe("Latitude of the location (from the geocode tool)"),
         lon: z.number().describe("Longitude of the location (from the geocode tool)"),
@@ -63,6 +63,44 @@ server.registerTool("alert-fire", {
             },
         ],
     };
+});
+// VIIRS fire detections tool
+server.registerTool("get-viirs-fires", {
+    description: "Get VIIRS satellite fire detections near a given location. Use the geocode tool first to obtain latitude and longitude.",
+    inputSchema: {
+        lat: z.number().describe("Latitude of the location (from the geocode tool)"),
+        lon: z.number().describe("Longitude of the location (from the geocode tool)"),
+    },
+}, async ({ lat, lon }) => {
+    const response = await fetch(`${CALAMITY_API_BASE_URL}/fires/viirs?lat=${lat}&lon=${lon}`);
+    const detections = await response.json();
+    if (!detections.length) {
+        return { content: [{ type: "text", text: "No VIIRS fire detections found near this location." }] };
+    }
+    const confidenceLabel = (c) => c === "h" ? "high" : c === "l" ? "low" : "nominal";
+    const formatTime = (t) => `${String(t).padStart(4, "0").slice(0, 2)}:${String(t).padStart(4, "0").slice(2)}Z`;
+    const dates = [...new Set(detections.map(d => d.acqDate))].sort();
+    const high = detections.filter(d => d.confidence === "h");
+    const maxFrp = Math.max(...detections.map(d => d.frp));
+    const topDetection = detections.find(d => d.frp === maxFrp);
+    const lines = [
+        `VIIRS Fire Detections: ${detections.length} total (${high.length} high-confidence)`,
+        `Date range: ${dates[0]} – ${dates[dates.length - 1]}`,
+        `Peak FRP: ${maxFrp} MW at ${topDetection.acqDate} ${formatTime(topDetection.acqTime)} (${topDetection.latitude}, ${topDetection.longitude})`,
+        "",
+    ];
+    if (high.length) {
+        lines.push("High-confidence detections:");
+        high.forEach(d => {
+            lines.push(`  • ${d.acqDate} ${formatTime(d.acqTime)} — (${d.latitude}, ${d.longitude}) FRP: ${d.frp} MW [${d.dayNight === "D" ? "day" : "night"}]`);
+        });
+        lines.push("");
+    }
+    lines.push("All detections:");
+    detections.forEach(d => {
+        lines.push(`  • ${d.acqDate} ${formatTime(d.acqTime)} — (${d.latitude}, ${d.longitude}) FRP: ${d.frp} MW confidence: ${confidenceLabel(d.confidence)} [${d.dayNight === "D" ? "day" : "night"}]`);
+    });
+    return { content: [{ type: "text", text: lines.join("\n") }] };
 });
 // Get active alerts tool
 server.registerTool("get-alerts", {

@@ -35,59 +35,95 @@ public class ViirsService(IConfiguration config, IHttpClientFactory httpFactory)
     }
 
     /// <summary>
-    /// Builds one &amp;path= square polygon per fire detection (top 10 by FRP).
-    /// Azure Maps supports fc/fa fill on closed path geometries.
-    /// <para>
-    /// Both opacity and square size are driven by FRP — higher power = larger and darker square.
-    /// </para>
+    /// Builds a single &amp;path= convex-hull polygon that surrounds all fire detections.
+    /// The hull is reduced to at most 10 vertices via Visvalingam-Whyatt simplification.
+    /// Azure Maps static paths do not support gradients; a solid semi-transparent orange is used.
     /// </summary>
-    /// <param name="fires">Detections to render; only the 10 highest-FRP are used.</param>
+    /// <param name="fires">All fire detections to enclose.</param>
     public static string BuildFireCirclePaths(List<ViirsFireDetection> fires)
     {
-        const double EarthRadius = 6_371_000.0;
+        if (fires.Count == 0) return string.Empty;
 
-        // Higher FRP → larger square (half-side length in metres)
-        const int minHalfSideM = 1_000;
-        const int maxHalfSideM = 5_000;
+        var points = fires.Select(f => (lat: f.Latitude, lng: f.Longitude)).Distinct().ToList();
 
-        // Higher FRP → higher opacity (darker)
-        const double minAlpha = 0.1;
-        const double maxAlpha = 0.5;
-
-        var top10 = fires.OrderByDescending(f => f.Frp).Take(10).ToList();
-
-        double minFrp  = top10.Min(f => f.Frp);
-        double maxFrp  = top10.Max(f => f.Frp);
-        double frpSpan = maxFrp - minFrp;
-
-        return string.Concat(top10.Select(f =>
+        if (points.Count > 3)
         {
-            // Normalise FRP 0–1 within this set; guard against all fires having equal FRP.
-            double t = frpSpan > 0 ? (f.Frp - minFrp) / frpSpan : 0.5;
+            double meanLat = points.Average(p => p.lat);
+            double meanLng = points.Average(p => p.lng);
+            int outlier = 0;
+            double maxDist = -1;
+            for (int i = 0; i < points.Count; i++)
+            {
+                double d = Dist2D(points[i], (meanLat, meanLng));
+                if (d > maxDist) { maxDist = d; outlier = i; }
+            }
+            points.RemoveAt(outlier);
+        }
 
-            double alpha    = minAlpha + t * (maxAlpha - minAlpha);
-            string a        = alpha.ToString("F2", CultureInfo.InvariantCulture);
-            double halfSide = minHalfSideM + t * (maxHalfSideM - minHalfSideM);
+        var hull = points.Count <= 2 ? points : ComputeConvexHull(points);
 
-            // Convert half-side to degree offsets using spherical-Earth approximation.
-            double latDelta = halfSide / EarthRadius * (180.0 / Math.PI);
-            double lngDelta = halfSide / EarthRadius / Math.Cos(f.Latitude * Math.PI / 180.0) * (180.0 / Math.PI);
+        while (hull.Count > 10)
+            RemoveMinAreaVertex(hull);
 
-            double n = f.Latitude  + latDelta;
-            double s = f.Latitude  - latDelta;
-            double e = f.Longitude + lngDelta;
-            double w = f.Longitude - lngDelta;
+        static string Fmt(double v) => v.ToString(CultureInfo.InvariantCulture);
+        string positions = string.Join("|",
+            hull.Append(hull[0]).Select(p => $"{Fmt(p.lng)} {Fmt(p.lat)}"));
 
-            string Fmt(double v) => v.ToString(CultureInfo.InvariantCulture);
+        const string style = "lcFF4500|fcFF4500|la0.85|fa0.35|lw2";
+        return $"&path={style}||{positions}";
+    }
 
-            // NW → NE → SE → SW → NW (closed)
-            string positions = $"{Fmt(w)} {Fmt(n)}|{Fmt(e)} {Fmt(n)}|{Fmt(e)} {Fmt(s)}|{Fmt(w)} {Fmt(s)}|{Fmt(w)} {Fmt(n)}";
+    // Gift wrapping (Jarvis march) producing a CCW convex hull.
+    private static List<(double lat, double lng)> ComputeConvexHull(List<(double lat, double lng)> points)
+    {
+        int n = points.Count;
+        int startIdx = 0;
+        for (int i = 1; i < n; i++)
+            if (points[i].lng < points[startIdx].lng ||
+                (points[i].lng == points[startIdx].lng && points[i].lat < points[startIdx].lat))
+                startIdx = i;
 
-            // lc/fc = border/fill color, la/fa = per-fire alpha, lw = border width px
-            string style = $"lcFF4500|fcFF4500|la{a}|fa{a}|lw1";
+        var hull = new List<(double lat, double lng)>();
+        int cur = startIdx;
+        do
+        {
+            hull.Add(points[cur]);
+            int nxt = (cur + 1) % n;
+            for (int i = 0; i < n; i++)
+            {
+                double cross = Cross2D(points[cur], points[nxt], points[i]);
+                if (cross < 0 || (cross == 0 && Dist2D(points[cur], points[i]) > Dist2D(points[cur], points[nxt])))
+                    nxt = i;
+            }
+            cur = nxt;
+        } while (cur != startIdx && hull.Count <= n);
 
-            return $"&path={style}||{positions}";
-        }));
+        return hull;
+    }
+
+    // Removes the hull vertex whose removal causes the smallest area change (Visvalingam-Whyatt).
+    private static void RemoveMinAreaVertex(List<(double lat, double lng)> hull)
+    {
+        int n = hull.Count, minIdx = 0;
+        double minArea = double.MaxValue;
+        for (int i = 0; i < n; i++)
+        {
+            double area = Math.Abs(Cross2D(hull[(i - 1 + n) % n], hull[i], hull[(i + 1) % n]));
+            if (area < minArea) { minArea = area; minIdx = i; }
+        }
+        hull.RemoveAt(minIdx);
+    }
+
+    private static double Cross2D(
+        (double lat, double lng) o,
+        (double lat, double lng) a,
+        (double lat, double lng) b)
+        => (a.lng - o.lng) * (b.lat - o.lat) - (a.lat - o.lat) * (b.lng - o.lng);
+
+    private static double Dist2D((double lat, double lng) a, (double lat, double lng) b)
+    {
+        double dLat = a.lat - b.lat, dLng = a.lng - b.lng;
+        return dLat * dLat + dLng * dLng;
     }
 
     /// <summary>Parses a raw VIIRS CSV response body into fire detection records.</summary>

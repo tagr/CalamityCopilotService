@@ -1,7 +1,7 @@
 mcs.metadata:
   componentName: Current Conditions
 kind: AdaptiveDialog
-modelDescription: "This tool can handle queries like these: current conditions, weather alerts, fire warnings, storm warnings, flooding. If user only wants weather conditions, do not get fire alerts, as it draws from separate data sources."
+modelDescription: "This tool can handle queries like these: current conditions, weather alerts, fire warnings, storm warnings, flooding. If user only wants weather conditions, do not get fire alerts, as it draws from separate data sources. Conversely, only get fire alerts map if user wants to know fire conditions."
 beginDialog:
   kind: OnRecognizedIntent
   id: main
@@ -155,7 +155,10 @@ beginDialog:
 
     - kind: SendActivity
       id: sendActivity_Qh8Ev6
-      activity: Thanks! Based on what you entered, {Topic.location}, I'll get up-to-date {If(Topic.actionSubmitId = "weather", "NWS", "NASA  Satellite")} {Topic.actionSubmitId} information for this location.
+      activity: |-
+        Thanks! Based on what you entered, {Topic.location}, I'll get up-to-date {If(Topic.actionSubmitId = "weather", "NWS", "NASA  Satellite")} {Topic.actionSubmitId} information for this location.
+
+        {If(Topic.actionSubmitId = "fire", "Let me retrieve the fire map and provide you wildfire preparedness tips...","")}
 
 inputType: {}
 outputType: {}

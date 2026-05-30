@@ -51,7 +51,7 @@ app.MapGet("/map/static", async (
     var key = config["AzureMaps:Key"];
     var http = httpFactory.CreateClient();
     var isFireMap = overlay.Equals("fire", StringComparison.OrdinalIgnoreCase);
-    var zoomLevel = isFireMap ? 12 : 10;
+    var zoomLevel = isFireMap ? 11 : 10;
 
     // Azure Maps wants center as lon,lat
     var url =
@@ -288,7 +288,7 @@ app.Run();
 
 // Returns [west, south, east, north] — each edge exactly `radius` metres from the centre.
 // Uses the spherical-Earth approximation (WGS-84 mean radius = 6 371 000 m).
-static double[] GetBoundingBox(double lat, double lng, int radius = 100000)
+static double[] GetBoundingBox(double lat, double lng, int radius = 20000)
 {
     const double EarthRadius = 6_371_000.0; // metres
 
