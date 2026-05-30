@@ -22,15 +22,15 @@ One way of reducing our exposure to risk is access to up-to-date information. Us
 Andy Merhaut (GitHub: [@tagr](https://github.com/tagr))
 
 ## Samples
-<img width="677" height="462" alt="image" src="https://github.com/user-attachments/assets/b955cae0-5720-4afb-9d67-7f5e89384573" />
+<img width="649" height="449" alt="image" src="https://github.com/user-attachments/assets/904fc5bd-66d9-4260-82d3-14f5eb69b916" />
 
 *Figure 1. Adaptive card prompts for user location*
 
-<img width="641" height="476" alt="image" src="https://github.com/user-attachments/assets/5eb12214-14af-4037-8605-cd62516f9a71" />
+<img width="626" height="453" alt="image" src="https://github.com/user-attachments/assets/6277c9bd-15c6-486b-b57e-f09f260db040" />
 
 *Figure 2. Current NWS flash flood warnings for the selected location*
 
-<img width="671" height="475" alt="image" src="https://github.com/user-attachments/assets/a54be4d6-662b-45f6-a49a-81744414f1ce" />
+<img width="609" height="496" alt="image" src="https://github.com/user-attachments/assets/7f069112-d531-4aa8-b309-5c0cdb6edc57" />
 
 *Figure 3. Inline map of the hazardous area*
 
