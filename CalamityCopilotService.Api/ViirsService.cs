@@ -35,95 +35,48 @@ public class ViirsService(IConfiguration config, IHttpClientFactory httpFactory)
     }
 
     /// <summary>
-    /// Builds a single &amp;path= convex-hull polygon that surrounds all fire detections.
-    /// The hull is reduced to at most 10 vertices via Visvalingam-Whyatt simplification.
-    /// Azure Maps static paths do not support gradients; a solid semi-transparent orange is used.
+    /// Builds &amp;pins= query-string segments placing a custom flame icon at each fire detection,
+    /// scaled small / medium / large by FRP (Fire Radiative Power).
+    /// Capped at 100 total distinct locations to stay within Azure Maps static-image URL limits.
     /// </summary>
-    /// <param name="fires">All fire detections to enclose.</param>
-    public static string BuildFireCirclePaths(List<ViirsFireDetection> fires)
+    /// <param name="fires">Fire detections to mark.</param>
+    public string BuildFireCirclePaths(List<ViirsFireDetection> fires)
     {
         if (fires.Count == 0) return string.Empty;
 
-        var points = fires.Select(f => (lat: f.Latitude, lng: f.Longitude)).Distinct().ToList();
-
-        if (points.Count > 3)
-        {
-            double meanLat = points.Average(p => p.lat);
-            double meanLng = points.Average(p => p.lng);
-            int outlier = 0;
-            double maxDist = -1;
-            for (int i = 0; i < points.Count; i++)
-            {
-                double d = Dist2D(points[i], (meanLat, meanLng));
-                if (d > maxDist) { maxDist = d; outlier = i; }
-            }
-            points.RemoveAt(outlier);
-        }
-
-        var hull = points.Count <= 2 ? points : ComputeConvexHull(points);
-
-        while (hull.Count > 10)
-            RemoveMinAreaVertex(hull);
+        var iconUrl = config["FirePin:IconUrl"]
+                      ?? throw new InvalidOperationException("FirePin:IconUrl is not configured.");
 
         static string Fmt(double v) => v.ToString(CultureInfo.InvariantCulture);
-        string positions = string.Join("|",
-            hull.Append(hull[0]).Select(p => $"{Fmt(p.lng)} {Fmt(p.lat)}"));
+        string encodedIcon = Uri.EscapeDataString(iconUrl);
 
-        const string style = "lcFF4500|fcFF4500|la0.85|fa0.35|lw2";
-        return $"&path={style}||{positions}";
-    }
+        // Deduplicate by location, keep strongest detection, cap at 100.
+        var pts = fires
+            .GroupBy(f => (f.Longitude, f.Latitude))
+            .Select(g => g.MaxBy(f => f.Frp)!)
+            .OrderByDescending(f => f.Frp)
+            .Take(100)
+            .OrderBy(f => f.Frp)
+            .ToList();
 
-    // Gift wrapping (Jarvis march) producing a CCW convex hull.
-    private static List<(double lat, double lng)> ComputeConvexHull(List<(double lat, double lng)> points)
-    {
-        int n = points.Count;
-        int startIdx = 0;
-        for (int i = 1; i < n; i++)
-            if (points[i].lng < points[startIdx].lng ||
-                (points[i].lng == points[startIdx].lng && points[i].lat < points[startIdx].lat))
-                startIdx = i;
+        // Split into equal thirds by FRP rank: small / medium / large.
+        int n = pts.Count;
+        int third = n / 3;
+        var small  = pts.Take(third).ToList();
+        var medium = pts.Skip(third).Take(third).ToList();
+        var large  = pts.Skip(2 * third).ToList();
 
-        var hull = new List<(double lat, double lng)>();
-        int cur = startIdx;
-        do
-        {
-            hull.Add(points[cur]);
-            int nxt = (cur + 1) % n;
-            for (int i = 0; i < n; i++)
-            {
-                double cross = Cross2D(points[cur], points[nxt], points[i]);
-                if (cross < 0 || (cross == 0 && Dist2D(points[cur], points[i]) > Dist2D(points[cur], points[nxt])))
-                    nxt = i;
-            }
-            cur = nxt;
-        } while (cur != startIdx && hull.Count <= n);
+        static string Pins(string scale, List<ViirsFireDetection> group, string icon) =>
+            $"&pins=custom|sc{scale}||" +
+            string.Join("|", group.Select(f => $"{Fmt(f.Longitude)} {Fmt(f.Latitude)}")) +
+            $"||{icon}";
 
-        return hull;
-    }
+        var sb = new System.Text.StringBuilder();
+        if (small.Count  > 0) sb.Append(Pins("0.5", small,  encodedIcon));
+        if (medium.Count > 0) sb.Append(Pins("0.9", medium, encodedIcon));
+        if (large.Count  > 0) sb.Append(Pins("1.3", large,  encodedIcon));
 
-    // Removes the hull vertex whose removal causes the smallest area change (Visvalingam-Whyatt).
-    private static void RemoveMinAreaVertex(List<(double lat, double lng)> hull)
-    {
-        int n = hull.Count, minIdx = 0;
-        double minArea = double.MaxValue;
-        for (int i = 0; i < n; i++)
-        {
-            double area = Math.Abs(Cross2D(hull[(i - 1 + n) % n], hull[i], hull[(i + 1) % n]));
-            if (area < minArea) { minArea = area; minIdx = i; }
-        }
-        hull.RemoveAt(minIdx);
-    }
-
-    private static double Cross2D(
-        (double lat, double lng) o,
-        (double lat, double lng) a,
-        (double lat, double lng) b)
-        => (a.lng - o.lng) * (b.lat - o.lat) - (a.lat - o.lat) * (b.lng - o.lng);
-
-    private static double Dist2D((double lat, double lng) a, (double lat, double lng) b)
-    {
-        double dLat = a.lat - b.lat, dLng = a.lng - b.lng;
-        return dLat * dLat + dLng * dLng;
+        return sb.ToString();
     }
 
     /// <summary>Parses a raw VIIRS CSV response body into fire detection records.</summary>
