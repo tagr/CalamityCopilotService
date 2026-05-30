@@ -191,7 +191,7 @@ sequenceDiagram
 - ⚡ **Express 5** — HTTP server
 - 🤝 **`@modelcontextprotocol/sdk`** — MCP Streamable HTTP transport
 - ✅ **Zod** — input schema validation for MCP tools
-- 🛠️ Exposes four tools to Copilot Studio: `geocode`, `get-alerts`, `alert-map`, `alert-fire`
+- 🛠️ Exposes five tools to Copilot Studio: `geocode`, `get-alerts`, `alert-map`, `alert-fire`, `get-viirs-fires`
 - ☁️ Deployed as an **Azure Container App**
 
 ### `🤖 /CopilotStudio/Calamity Agent` — Copilot Studio Agent
