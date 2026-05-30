@@ -152,6 +152,15 @@ sequenceDiagram
 
     opt 🔥 Fire query
         rect rgb(180, 83, 9)
+            CA->>MCP: get-viirs-fires(lat, lon)
+            MCP->>API: GET /fires/viirs?lat=...&lon=...
+            API->>NASA: GET /api/area/csv/{key}/VIIRS_NOAA21_NRT/{bbox}/{days}
+            NASA-->>API: CSV fire detections
+            API-->>MCP: JSON fire detection records
+            MCP-->>CA: structured VIIRS fire data
+        end
+
+        rect rgb(180, 83, 9)
             CA->>MCP: alert-fire(lat, lon)
             MCP->>API: GET /map/static?overlay=fire
             API->>NASA: GET /api/area/csv/{key}/VIIRS_NOAA21_NRT/{bbox}/{days}
@@ -160,8 +169,9 @@ sequenceDiagram
             MAPS-->>API: PNG image bytes
             API-->>MCP: Azure Maps static image URL
             MCP-->>CA: fire map URL
-            CA-->>User: Fire detection map
         end
+
+        CA-->>User: Fire detection data + map
     end
 ```
 
