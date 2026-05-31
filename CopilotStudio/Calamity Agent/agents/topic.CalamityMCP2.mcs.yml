@@ -1,0 +1,17 @@
+mcs.metadata:
+  componentName: CalamityMCP2
+  description: MCP Server for Calamity Agent.
+kind: TaskDialog
+modelDisplayName: CalamityMCP2
+modelDescription: MCP Server for Calamity Agent.
+action:
+  kind: InvokeExternalAgentTaskAction
+  connectionReference: ca_CalamityAgent.shared_ca-5fcalamitymcp2-5fd6d7d08508c0fbe2.4cba5a77bcd84fc98df105dff197f7dd
+  connectionProperties:
+    mode: Invoker
+
+  operationDetails:
+    kind: ModelContextProtocolMetadata
+    operationId: InvokeServer
+    tools:
+      kind: UseAllTools
